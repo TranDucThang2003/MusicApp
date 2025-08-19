@@ -7,9 +7,8 @@ import '../models/song.dart';
 class SongItem extends StatelessWidget{
   final Song song;
   final VoidCallback onClickFavorite;
-  final VoidCallback onPlay;
 
-  const SongItem({super.key, required this.song, required this.onClickFavorite, required this.onPlay});
+  const SongItem({super.key, required this.song, required this.onClickFavorite});
 
   @override
   Widget build(BuildContext context) {

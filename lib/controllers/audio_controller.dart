@@ -3,7 +3,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import '../models/song.dart';
 
-class AudioController {
+class AudioController extends ChangeNotifier{
 
   final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -11,14 +11,18 @@ class AudioController {
   final ValueNotifier<Duration> _currentPosition = ValueNotifier(Duration.zero);
   final ValueNotifier<Duration> _totalDuration = ValueNotifier(Duration.zero);
   int? _previousIndex ;
-  List<Song> songs;
+  List<Song> songs = [];
 
   bool isShuffle = false ;
   bool isRepeat = false ;
 
-  AudioController({this.songs = const []});
+  AudioController();
 
   ValueNotifier<int?> get currentPlayingIndex => _currentPlayingIndex;
+
+  void setSongList(List<Song> sharedSongs) {
+    songs = sharedSongs;
+  }
 
   Future<void> onPlay(int index) async{
     try{

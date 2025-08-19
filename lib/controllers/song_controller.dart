@@ -5,7 +5,7 @@ import 'package:on_audio_query/on_audio_query.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import '../database/db_helper.dart';
+import '../database/database.dart';
 import '../models/song.dart';
 
 class SongController extends ChangeNotifier{
@@ -18,7 +18,6 @@ class SongController extends ChangeNotifier{
     notifyListeners();
   }
 
-
   Future<void> requestPermissionAndLoadSongs() async {
     var storageStatus = await Permission.storage.status;
     var audioStatus = await Permission.audio.status;
@@ -28,14 +27,14 @@ class SongController extends ChangeNotifier{
     }
 
     if (storageStatus.isGranted && audioStatus.isGranted) {
-      await loadSongs();
+      await loadSongsFromDevices();
     } else if(Platform.isAndroid){
       await [
         Permission.storage,
         Permission.audio,
         Permission.mediaLibrary,
       ].request();
-      await loadSongs();
+      await loadSongsFromDevices();
     }
   }
 
@@ -50,7 +49,7 @@ class SongController extends ChangeNotifier{
     return file.path;
   }
 
-  Future<void> loadSongs() async {
+  Future<void> loadSongsFromDevices() async {
     List<SongModel> songOnQuery = await _audioQuery.querySongs(
       sortType: SongSortType.DISPLAY_NAME,
       orderType: OrderType.ASC_OR_SMALLER,

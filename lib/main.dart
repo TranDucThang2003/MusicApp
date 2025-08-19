@@ -1,26 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:music/controller/audio_controller.dart';
-import 'package:music/controller/song_controller.dart';
-import 'package:music/screens/playlist_screen.dart';
+import 'package:music/controllers/audio_controller.dart';
+import 'package:music/controllers/song_controller.dart';
+import 'package:music/views/playlist_screen/playlist_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() {
   runApp(
-    MultiProvider(providers: [
-      ChangeNotifierProvider(create: (_) => SongController()),
-      Provider(create: (_) => AudioController())
-    ]),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => SongController()..requestPermissionAndLoadSongs()),
+        ChangeNotifierProxyProvider<SongController, AudioController>(
+          create: (_) => AudioController(),
+          update: (_, songController, audioController) {
+            songController.loadSongsOffline();
+            audioController!.setSongList(songController.songs);
+            return audioController;
+          },
+        ),
+      ],
+      child: const MyMusicApp(),
+    ),
   );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
 
-  // This widget is the root of your application.
+class MyMusicApp extends StatelessWidget {
+  const MyMusicApp({super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
