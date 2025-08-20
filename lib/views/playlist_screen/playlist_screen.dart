@@ -27,12 +27,9 @@ class PlayListScreenState extends State<PlayListScreen>{
 
   @override
   Widget build(BuildContext context) {
-    final audioPlayer = Provider.of<AudioController>(context);
-    final songController = Provider.of<SongController>(context);
-
     final pages = [
       SearchScreen(switchPage: switchPage,),
-      MusicListScreen(audioPlayer: audioPlayer, songController: songController,),
+      MusicListScreen(),
       FavoriteScreen(),
     ];
 

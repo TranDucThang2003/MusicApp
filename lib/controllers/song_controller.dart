@@ -36,41 +36,47 @@ class SongController extends ChangeNotifier{
         Permission.audio,
         Permission.mediaLibrary,
       ].request();
+      final hasPermission = await OnAudioQuery().permissionsStatus();
+      if (!hasPermission) {
+        await OnAudioQuery().permissionsRequest();
+      }
       await loadSongsFromDevices();
+      await syncSongs(_songs);
+      await loadSongsOffline();
+      notifyListeners();
     }
   }
 
   Future<String?> saveArtworkToFile(int songId) async {
-    final Uint8List? artwork = await OnAudioQuery().queryArtwork(songId, ArtworkType.AUDIO);
+    final Uint8List? artwork = await OnAudioQuery().queryArtwork(
+      songId,
+      ArtworkType.AUDIO, // hoặc ArtworkType.ALBUM
+    );
 
-    if (artwork == null) return null;
+    if (artwork == null) {
+      return null;
+    }
 
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/artwork_$songId.png');
-    await file.writeAsBytes(artwork);
-    return file.path;
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/artwork_$songId.png');
+      await file.writeAsBytes(artwork);
+      return file.path;
   }
 
   Future<void> loadSongsFromDevices() async {
     List<SongModel> songOnQuery = await _audioQuery.querySongs(
-      sortType: SongSortType.DISPLAY_NAME,
-      orderType: OrderType.ASC_OR_SMALLER,
-      uriType: UriType.EXTERNAL,
-      ignoreCase: true,
     );
-    songs.clear();
+    _songs.clear();
     for (var song in songOnQuery){
       String? artworkPath = await saveArtworkToFile(song.id);
-      songs.add(
+      _songs.add(
           Song(
               id: song.id,
-              songName: song.title,
+              songName: song.displayName,
               songArtist: song.artist ?? "unknown",
               audioURL: song.data,
               backgroundURL: artworkPath ?? ""));
     }
-    await syncSongs(songs);
-    notifyListeners();
   }
 
   Future<void> loadFavoriteSongs() async{
@@ -79,9 +85,7 @@ class SongController extends ChangeNotifier{
   }
 
   Future<void> syncSongs(List<Song> deviceSongs) async{
-    for(var song in deviceSongs){
-      await DatabaseHelper.instance.insertIfNotExists(song);
-    }
+    await DatabaseHelper.instance.insertSongs(deviceSongs);
   }
 
   Future<void> handleFavoriteSong(Song song) async{

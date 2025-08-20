@@ -16,65 +16,61 @@ class MiniPlayer extends StatelessWidget {
       ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
-    return Consumer<AudioController>(
-      builder: (context, audioPlayer, _) {
-        final index = audioPlayer.currentPlayingIndex;
-        if (index == null) return const SizedBox.shrink();
+    final audioController = context.watch<AudioController>();
 
-        final song = audioPlayer.songs[index];
+    if (!audioController.isPlaying) return const SizedBox.shrink();
 
-        return Align(
-          alignment: Alignment.bottomCenter,
-          child: GestureDetector(
-            onTap: () => onClickToMovePlayScreen(context),
-            child: Container(
-              height: 70,
-              color: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
-                      "assets/images/bg.png",
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(song.songName,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis),
-                        Text(song.songArtist,
-                            style: const TextStyle(
-                                color: Colors.white70, fontSize: 12),
-                            overflow: TextOverflow.ellipsis),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(audioPlayer.isPlaying?Icons.pause:Icons.play_arrow, color: Colors.white),
-                    onPressed: () {
-                      audioPlayer.togglePlayPause();
-                    },
-                  ),
-                ],
+    final song = audioController.songs[audioController.currentPlayingIndex!];
+
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: GestureDetector(
+        onTap: () => onClickToMovePlayScreen(context),
+        child: Container(
+          height: 70,
+          color: Colors.black,
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  "assets/images/bg.png",
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(song.songName,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis),
+                    Text(song.songArtist,
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 12),
+                        overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: Icon(audioController.isPlaying?Icons.pause:Icons.play_arrow, color: Colors.white),
+                onPressed: () {
+                  audioController.togglePlayPause();
+                },
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
