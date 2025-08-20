@@ -35,10 +35,17 @@ class DatabaseHelper{
     ''');
   }
 
-  Future<void> insertSongs(Song song) async{
+  Future<void> insertSongs(List<Song> songs) async{
     final db = await instance.database;
 
-    await db.insert("songs", song.toMap(),conflictAlgorithm: ConflictAlgorithm.replace);
+    Batch batch = db.batch();
+
+    for(var song in songs){
+      print(song.id);
+      batch.insert('songs', song.toMap(),conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+
+    await batch.commit(noResult: true);
   }
 
   Future<void> insertIfNotExists(Song song) async{

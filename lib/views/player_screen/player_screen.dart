@@ -166,6 +166,7 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
                     child: IconButton(
                       onPressed: () {
                         audioController.togglePlayPause();
+                        audioController.isPlaying ? _rotationController.stop() : _rotationController.repeat();
                       },
                       icon: Icon(
                         audioController.isPlaying

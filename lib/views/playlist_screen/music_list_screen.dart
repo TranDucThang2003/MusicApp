@@ -9,9 +9,7 @@ import 'package:provider/provider.dart';
 import '../../components/song_item.dart';
 
 class MusicListScreen extends StatefulWidget{
-  final SongController songController;
-  final AudioController audioPlayer;
-  const MusicListScreen({super.key, required this.songController, required this.audioPlayer});
+  const MusicListScreen({super.key});
 
   @override
   State<StatefulWidget> createState() => MusicListScreenState();
@@ -21,22 +19,24 @@ class MusicListScreen extends StatefulWidget{
 class MusicListScreenState extends State<MusicListScreen>{
   @override
   Widget build(BuildContext context) {
+    final audioController = context.watch<AudioController>();
+    final songController = context.read<SongController>();
     return Column(
-      children: [
-        Expanded(
-          child: ListView.builder (
-              itemCount: widget.songController.songs.length,
+        children: [
+          Expanded(
+            child: ListView.builder (
+              itemCount: songController.songs.length,
               physics: BouncingScrollPhysics(),
               itemBuilder: (BuildContext context, int index) {
                 return GestureDetector(
-                    onTap: () => widget.audioPlayer.onPlay(index),
-                    child: SongItem (
-                      song: widget.songController.songs[index],
-                      onClickFavorite: () => widget.songController.handleFavoriteSong(widget.songController.songs[index]),
-                    ),);
+                  onTap: () => audioController.onPlay(index),
+                  child: SongItem (
+                    song: songController.songs[index],
+                    onClickFavorite: () => songController.handleFavoriteSong(songController.songs[index]),
+                  ),);
               },
+            ),
           ),
-        ),
-    ]);
+        ]);
   }
 }

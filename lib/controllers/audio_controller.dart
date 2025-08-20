@@ -8,17 +8,18 @@ class AudioController extends ChangeNotifier{
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   int? currentPlayingIndex ;
+  int? previousIndex ;
+
   Duration currentPosition = Duration.zero;
   Duration totalDuration = Duration.zero;
+
   bool isShuffle = false;
   bool isRepeat = false;
   bool isPlaying = false;
 
-  int? previousIndex ;
   List<Song> songs = [];
 
   AudioController() {
-    listenDuration();
     listenPlayerState();
 
     _audioPlayer.playingStream.listen((playing) {
@@ -34,6 +35,7 @@ class AudioController extends ChangeNotifier{
     // current position
     _audioPlayer.positionStream.listen((position) {
       currentPosition = position;
+      notifyListeners();
     });
 
     _audioPlayer.playerStateStream.listen((state) {
@@ -57,9 +59,9 @@ class AudioController extends ChangeNotifier{
     if (songs.isEmpty || index < 0 || index >= songs.length) return;
 
     try{
-      _audioPlayer.setAudioSource(
+      await _audioPlayer.setAudioSource(
         AudioSource.uri(
-          Uri.parse(songs[index].audioURL),
+          Uri.file(songs[index].audioURL),
           tag: MediaItem(
             id: songs[index].audioURL,
             album: "Album",
@@ -119,15 +121,6 @@ class AudioController extends ChangeNotifier{
       await _audioPlayer.play();
       isPlaying = true;
     }
-  }
-
-  void listenDuration(){
-    _audioPlayer.durationStream.listen((duration){
-      totalDuration = duration ?? Duration.zero;
-    });
-    _audioPlayer.positionStream.listen((position){
-      currentPosition = position;
-    });
   }
 
   void listenPlayerState(){
