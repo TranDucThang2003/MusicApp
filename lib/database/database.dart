@@ -57,6 +57,12 @@ class DatabaseHelper{
     return result.map((map)=> Song.fromMap(map)).toList();
   }
 
+  Future<List<Song>> getFavoriteSongs() async{
+    final db = await instance.database;
+    final result = await db.query('songs',where: 'is_favorite = 1');
+    return result.map((map)=> Song.fromMap(map)).toList();
+  }
+
   Future<void> favoriteSong(int id, bool isFavorite) async{
     final db = await instance.database;
     await db.update('songs', {'is_favorite': isFavorite ? 1 : 0},where: 'id = ?',whereArgs: [id]);

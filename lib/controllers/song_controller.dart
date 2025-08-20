@@ -12,6 +12,8 @@ class SongController extends ChangeNotifier{
   final OnAudioQuery _audioQuery = OnAudioQuery();
   List<Song> _songs = [];
   List<Song> get songs => _songs;
+  List<Song> _favoriteSongs = [];
+  List<Song> get favoriteSongs => _favoriteSongs;
 
   Future<void> loadSongsOffline() async {
     _songs = await DatabaseHelper.instance.getSongs();
@@ -59,7 +61,6 @@ class SongController extends ChangeNotifier{
     songs.clear();
     for (var song in songOnQuery){
       String? artworkPath = await saveArtworkToFile(song.id);
-      print(song.id);
       songs.add(
           Song(
               id: song.id,
@@ -69,6 +70,11 @@ class SongController extends ChangeNotifier{
               backgroundURL: artworkPath ?? ""));
     }
     await syncSongs(songs);
+    notifyListeners();
+  }
+
+  Future<void> loadFavoriteSongs() async{
+    _favoriteSongs =  await DatabaseHelper.instance.getFavoriteSongs();
     notifyListeners();
   }
 

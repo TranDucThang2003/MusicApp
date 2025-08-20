@@ -1,38 +1,37 @@
-import 'dart:io';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:music/controllers/audio_controller.dart';
+import 'package:music/controllers/song_controller.dart';
+import 'package:music/models/song.dart';
 import 'package:provider/provider.dart';
 
-import '../../controllers/audio_controller.dart';
-import '../../controllers/song_controller.dart';
-import '../../models/song.dart';
+class PlayerScreen extends StatefulWidget {
 
-class PlayerScreen extends StatefulWidget{
-  final Song song;
-  const PlayerScreen({super.key, required this.song});
+  const PlayerScreen({
+    super.key,
+  });
 
   @override
-  State<StatefulWidget> createState() => PlayerScreenState();
+  State<PlayerScreen> createState() => _PlayerScreenState();
 }
 
-class PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderStateMixin{
-
-  Duration _currentPosition = Duration.zero;
-  Duration _totalDuration = Duration.zero;
+class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderStateMixin {
 
   late AnimationController _rotationController;
-
 
   @override
   void initState() {
     super.initState();
-    _rotationController = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 90), // 10 giây cho 1 vòng xoay
-    )..repeat();
-
+    _rotationController =
+    AnimationController(vsync: this, duration: const Duration(seconds: 90))
+      ..repeat();
   }
+
+  @override
+  void dispose() {
+    _rotationController.dispose();
+    super.dispose();
+  }
+
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final minutes = twoDigits(duration.inMinutes.remainder(60));
@@ -42,129 +41,155 @@ class PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSta
 
   @override
   Widget build(BuildContext context) {
-    final audioPlayer = Provider.of<AudioController>(context);
-    final songController = Provider.of<SongController>(context);
+    final audioController = context.watch<AudioController>();
+    final songController = context.read<SongController>();
+
+    final currentIndex = audioController.currentPlayingIndex;
+    if (currentIndex == null) {
+      return const Scaffold(
+        body: Center(child: Text("Không có bài hát nào đang phát")),
+      );
+    }
+
+    final Song song = songController.songs[currentIndex];
 
     return Scaffold(
-        backgroundColor: Colors.purple,
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text("C H I L L I N G T I M E",style: TextStyle(color: Colors.white),),
-          centerTitle: true,
-          elevation: 0,
+      backgroundColor: Colors.purple,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        title: const Text(
+          "CHILLTIME",
+          style: TextStyle(color: Colors.white, letterSpacing: 20),
         ),
-        body: Container(
-            margin: const EdgeInsets.only(top : kToolbarHeight + 30),
-            decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(50),
-                    topRight: Radius.circular(50)
-                )
-            ),
-            child: Center(
-                child: Column(
-                  children: [
-                  Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Container(
-                      margin: EdgeInsets.only(
-                          top: 20,
-                          right: 20
-                      ),
-                      child: IconButton(onPressed: (){
+        centerTitle: true,
+        elevation: 0,
+      ),
+      body: Container(
+        margin: const EdgeInsets.only(top: kToolbarHeight + 50),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(50), topRight: Radius.circular(50)),
+        ),
+        child: Center(
+          child: Column(
+            children: [
+              // Nút favorite
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 20, right: 20),
+                    child: IconButton(
+                      onPressed: () {
+                        songController.handleFavoriteSong(song);
+                      },
+                      icon: Icon(song.isFavorite ? Icons.favorite : Icons.favorite_border, color: Colors.pinkAccent),
+                    ),
+                  )
+                ],
+              ),
+              const SizedBox(height: 50),
 
-                      }, icon: Icon(Icons.favorite,color: Colors.pinkAccent,)),
-                    )
+              // Ảnh xoay
+              Container(
+                width: 250,
+                height: 250,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.amber, width: 5),
+                  borderRadius: BorderRadius.circular(250),
+                ),
+                child: RotationTransition(
+                  turns: _rotationController,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(250),
+                    child: Image.asset("assets/images/bg.png"),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 50),
+
+              // Tên bài hát
+              Text(
+                song.songName,
+                overflow: TextOverflow.ellipsis,
+                style:
+                const TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
+              ),
+              Text(song.songArtist),
+              const SizedBox(height: 20),
+
+              // Thanh thời gian
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(_formatDuration(audioController.currentPosition),
+                        style: const TextStyle(fontSize: 20)),
+                    Text(_formatDuration(audioController.totalDuration),
+                        style: const TextStyle(fontSize: 20)),
                   ],
                 ),
-                SizedBox(height: 50,),
-                Container(
-                  width: 250,
-                  height: 250,
-                  decoration: BoxDecoration(
-                      border: BoxBorder.all(color: Colors.amber,width: 20),
-                      borderRadius: BorderRadius.circular(250)
-                  ),
-                  child: RotationTransition(
-                    turns: _rotationController,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(250),
-                      child: Image.file(File(widget.song.backgroundURL!)),
+              ),
+              Slider(
+                min: 0,
+                max: audioController.totalDuration.inSeconds.toDouble(),
+                value: audioController.currentPosition.inSeconds.clamp(0,
+                    audioController.totalDuration.inSeconds).toDouble(),
+                onChanged: (value) {
+                  audioController.seek(Duration(seconds: value.toInt()));
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Control buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    onPressed: () { audioController.toggleRepeat();},
+                    icon: Icon(Icons.repeat, size: 50,color: audioController.isRepeat ? Colors.amber : Colors.black,)),
+                  IconButton(
+                      onPressed: () {
+                        audioController.skipToPrevious();
+                      },
+                      icon: const Icon(Icons.skip_previous, size: 50)),
+                  Container(
+                    width: 75,
+                    height: 75,
+                    decoration: BoxDecoration(
+                      color: Colors.purple,
+                      borderRadius: BorderRadius.circular(75),
+                    ),
+                    child: IconButton(
+                      onPressed: () {
+                        audioController.togglePlayPause();
+                      },
+                      icon: Icon(
+                        audioController.isPlaying
+                            ? Icons.pause
+                            : Icons.play_arrow,
+                        size: 50,
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: 50,),
-                Text(
-                  widget.song.songName,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontWeight: FontWeight.bold,fontSize: 30),),
-                Text(widget.song.songArtist),
-                SizedBox(height: 20,),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 25),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(_formatDuration(_currentPosition),style: TextStyle(fontSize: 20),),
-                      Text(_formatDuration(_totalDuration),style: TextStyle(fontSize: 20),),
-                    ],
-                  ),
-                ),
-                    Slider(
-                      min: 0,
-                      max: _totalDuration.inSeconds.toDouble(),
-                      value: _currentPosition.inSeconds.clamp(0, _totalDuration.inSeconds).toDouble(),
-                      onChanged: (value) {
-                        setState(() {
-                          _currentPosition = Duration(seconds: value.toInt());
-                        });
-                        audioPlayer.skipToNext();
-                      },),
-                    SizedBox(height: 20,),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        IconButton(
-                            onPressed: (){
-                             // _toggleOnRepeat();
-                            }, icon: Icon(Icons.repeat,size: 50,color:Colors.black,)
-                        ),
-                        IconButton(
-                            onPressed: (){
-                              //_handlePrevious();
-                            }, icon: Icon(Icons.skip_previous_sharp,size: 50,color: Colors.black,)
-                        ),
-                        Container(
-                          width: 75,
-                          height: 75,
-                          decoration: BoxDecoration(
-                              color: Colors.purple,
-                              borderRadius: BorderRadius.circular(75)
-                          ),
-                          child: IconButton(onPressed: (){
-                            //_handlePlayPause();
-                          }, icon: Icon(Icons.pause,size: 50, color: Colors.black,)),
-                        ),
-                        IconButton(
-                            onPressed: (){
-                              //_handleNext();
-                            }, icon: Icon(Icons.skip_next_sharp,size: 50,color: Colors.black,)
-                        ),
-                        IconButton(
-                            onPressed: (){
-                              //_toggleOnShuffle();
-                            }, icon: Icon(Icons.shuffle,size: 50, color:Colors.black,)
-                        ),
-                      ],
-                    )
-                  ],
-                ),
-            ),
+                  IconButton(
+                      onPressed: () {
+                        audioController.skipToNext();
+                      },
+                      icon: const Icon(Icons.skip_next, size: 50)),
+                  IconButton(
+                      onPressed: () {
+                        audioController.toggleShuffle();
+                      },
+                      icon: Icon(Icons.shuffle, size: 50 , color: audioController.isShuffle ? Colors.amber : Colors.black,)),
+                ],
+              )
+            ],
+          ),
         ),
-      endDrawer: Drawer(
       ),
     );
   }

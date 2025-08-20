@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:music/views/playlist_screen/mini_player.dart';
 import 'package:music/views/playlist_screen/search_screen.dart';
+import 'package:provider/provider.dart';
 
+import '../../controllers/audio_controller.dart';
+import '../../controllers/song_controller.dart';
 import 'favorite_screen.dart';
 import 'music_list_screen.dart';
 
@@ -15,12 +19,20 @@ class PlayListScreenState extends State<PlayListScreen>{
 
   int _currentIndex = 1;
 
+  void switchPage(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final audioPlayer = Provider.of<AudioController>(context);
+    final songController = Provider.of<SongController>(context);
 
     final pages = [
-      SearchScreen(),
-      MusicListScreen(),
+      SearchScreen(switchPage: switchPage,),
+      MusicListScreen(audioPlayer: audioPlayer, songController: songController,),
       FavoriteScreen(),
     ];
 
@@ -30,7 +42,12 @@ class PlayListScreenState extends State<PlayListScreen>{
         title: Text("PLAYLIST" , style: TextStyle(letterSpacing: 20),),
         centerTitle: true,
       ),
-      body: pages[_currentIndex],
+      body: Column(
+        children: [
+          Expanded(child: pages[_currentIndex]),
+          MiniPlayer()
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
           currentIndex: _currentIndex,
           fixedColor: Colors.deepOrange,
@@ -47,9 +64,7 @@ class PlayListScreenState extends State<PlayListScreen>{
                 icon: Icon(Icons.favorite)),
           ],
           onTap: (itemIndex){
-            setState(() {
-              _currentIndex = itemIndex;
-            });
+            switchPage(itemIndex);
           },
         ),
       );

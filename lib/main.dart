@@ -22,8 +22,6 @@ void main() {
     ),
   );
 }
-
-
 class MyMusicApp extends StatelessWidget {
   const MyMusicApp({super.key});
   @override

@@ -7,24 +7,55 @@ class AudioController extends ChangeNotifier{
 
   final AudioPlayer _audioPlayer = AudioPlayer();
 
-  final ValueNotifier<int?> _currentPlayingIndex = ValueNotifier(null);
-  final ValueNotifier<Duration> _currentPosition = ValueNotifier(Duration.zero);
-  final ValueNotifier<Duration> _totalDuration = ValueNotifier(Duration.zero);
-  int? _previousIndex ;
+  int? currentPlayingIndex ;
+  Duration currentPosition = Duration.zero;
+  Duration totalDuration = Duration.zero;
+  bool isShuffle = false;
+  bool isRepeat = false;
+  bool isPlaying = false;
+
+  int? previousIndex ;
   List<Song> songs = [];
 
-  bool isShuffle = false ;
-  bool isRepeat = false ;
+  AudioController() {
+    listenDuration();
+    listenPlayerState();
 
-  AudioController();
+    _audioPlayer.playingStream.listen((playing) {
+      isPlaying = playing;
+      notifyListeners();
+    });
 
-  ValueNotifier<int?> get currentPlayingIndex => _currentPlayingIndex;
+    _audioPlayer.durationStream.listen((duration) {
+      totalDuration = duration ?? Duration.zero;
+      notifyListeners();
+    });
+
+    // current position
+    _audioPlayer.positionStream.listen((position) {
+      currentPosition = position;
+    });
+
+    _audioPlayer.playerStateStream.listen((state) {
+      if (state.processingState == ProcessingState.completed) {
+        if (isRepeat && currentPlayingIndex != null) {
+          onPlay(currentPlayingIndex!);
+        } else {
+          skipToNext();
+        }
+      }
+    });
+  }
 
   void setSongList(List<Song> sharedSongs) {
     songs = sharedSongs;
+    notifyListeners();
   }
 
   Future<void> onPlay(int index) async{
+
+    if (songs.isEmpty || index < 0 || index >= songs.length) return;
+
     try{
       _audioPlayer.setAudioSource(
         AudioSource.uri(
@@ -39,68 +70,81 @@ class AudioController extends ChangeNotifier{
         ),
       );
       await _audioPlayer.play();
-
-      _currentPlayingIndex.value = index;
+      currentPlayingIndex = index;
+      notifyListeners();
     }catch(e){
       print("Loi khi phat nhac : $e");
     }
   }
 
-  Future<void> onPause() async{
-    await _audioPlayer.pause();
-  }
+  Future<void> onPause() async{ await _audioPlayer.pause(); }
+  Future<void> onResume() async{ await _audioPlayer.play();}
+  Future<void> onStop() async{ await _audioPlayer.stop(); }
 
-  Future<void> onResume() async{
-    await _audioPlayer.play();
-  }
-
-  Future<void> onStop() async{
-    await _audioPlayer.stop();
+  void seek(Duration position) {
+    _audioPlayer.seek(position);
   }
 
   void skipToNext(){
-    _previousIndex = _currentPlayingIndex.value!;
+    if (songs.isEmpty || currentPlayingIndex == null) return;
+
+    previousIndex = currentPlayingIndex!;
+
     if (isShuffle) {
-      _currentPlayingIndex.value = ((_currentPlayingIndex.value! + (1 + DateTime.now().millisecond) % songs.length) % songs.length);
+      currentPlayingIndex = ((currentPlayingIndex! + (1 + DateTime.now().millisecond) % songs.length) % songs.length);
     } else {
-      _currentPlayingIndex.value = (_currentPlayingIndex.value! + 1) % songs.length;
+      currentPlayingIndex = (currentPlayingIndex! + 1) % songs.length;
     }
-    onPlay(_currentPlayingIndex.value!);
+    onPlay(currentPlayingIndex!);
   }
 
   void skipToPrevious(){
-    if(_previousIndex!=null){
-      _currentPlayingIndex.value = _previousIndex;
+    if (songs.isEmpty || currentPlayingIndex == null) return;
+
+    if(previousIndex!=null){
+      currentPlayingIndex = previousIndex;
     }
-    onPlay(_currentPlayingIndex.value!);
+    onPlay(currentPlayingIndex!);
   }
 
-  void setShuffle(){
-    isShuffle = !isShuffle;
-  }
+  void toggleShuffle(){ isShuffle = !isShuffle; }
 
-  void setRepeat(){
-    isRepeat = !isRepeat;
+  void toggleRepeat(){ isRepeat= !isRepeat ;}
+
+  Future<void> togglePlayPause() async {
+    if (_audioPlayer.playing) {
+      await _audioPlayer.pause();
+      isPlaying = false;
+    } else {
+      await _audioPlayer.play();
+      isPlaying = true;
+    }
   }
 
   void listenDuration(){
     _audioPlayer.durationStream.listen((duration){
-      _totalDuration.value = duration ?? Duration.zero;
+      totalDuration = duration ?? Duration.zero;
     });
     _audioPlayer.positionStream.listen((position){
-      _currentPosition.value = position;
+      currentPosition = position;
     });
   }
 
   void listenPlayerState(){
     _audioPlayer.playerStateStream.listen((state){
       if(state.processingState == ProcessingState.completed){
-        if(isRepeat && _currentPlayingIndex.value != null){
-          onPlay(_currentPlayingIndex.value!);
+        if(isRepeat && currentPlayingIndex != null){
+          onPlay(currentPlayingIndex!);
         }else{
           skipToNext();
         }
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
   }
 }
