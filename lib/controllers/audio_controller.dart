@@ -1,14 +1,16 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:math';
+
+import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import '../models/song.dart';
 
-class AudioController extends ChangeNotifier{
-
+class AudioController extends ChangeNotifier {
   final AudioPlayer _audioPlayer = AudioPlayer();
 
-  int? currentPlayingIndex ;
-  int? previousIndex ;
+  Song? currentSong;
+
+  List<Song> songHistory = [];
 
   Duration currentPosition = Duration.zero;
   Duration totalDuration = Duration.zero;
@@ -19,9 +21,9 @@ class AudioController extends ChangeNotifier{
 
   List<Song> songs = [];
 
-  AudioController() {
-    listenPlayerState();
+  AudioPlayer get audioPlayer => _audioPlayer;
 
+  AudioController() {
     _audioPlayer.playingStream.listen((playing) {
       isPlaying = playing;
       notifyListeners();
@@ -29,19 +31,19 @@ class AudioController extends ChangeNotifier{
 
     _audioPlayer.durationStream.listen((duration) {
       totalDuration = duration ?? Duration.zero;
-      notifyListeners();
+      //notifyListeners();
     });
 
     // current position
     _audioPlayer.positionStream.listen((position) {
       currentPosition = position;
-      notifyListeners();
+      //notifyListeners();
     });
 
     _audioPlayer.playerStateStream.listen((state) {
       if (state.processingState == ProcessingState.completed) {
-        if (isRepeat && currentPlayingIndex != null) {
-          onPlay(currentPlayingIndex!);
+        if (isRepeat && currentSong != null) {
+          onPlay(currentSong!);
         } else {
           skipToNext();
         }
@@ -51,93 +53,118 @@ class AudioController extends ChangeNotifier{
 
   void setSongList(List<Song> sharedSongs) {
     songs = sharedSongs;
-    notifyListeners();
   }
 
-  Future<void> onPlay(int index) async{
+  Future<void> setPlaylistAndPlay(List<Song> newSongs, Song startSong) async {
+    if (!isSameList(newSongs, songs)) {
+      songs = newSongs;
+    }
+    if (currentSong != startSong) {
+      await onPlay(startSong);
+    }
+  }
 
-    if (songs.isEmpty || index < 0 || index >= songs.length) return;
-
-    try{
+  Future<void> onPlay(Song song) async {
+    currentSong = song;
+    if (songs.isEmpty) return;
+    try {
       await _audioPlayer.setAudioSource(
         AudioSource.uri(
-          Uri.file(songs[index].audioURL),
+          Uri.file(song.audioURL),
           tag: MediaItem(
-            id: songs[index].audioURL,
+            id: song.audioURL,
             album: "Album",
-            title: songs[index].songName,
-            artist: songs[index].songArtist,
-            artUri: Uri.parse("https://noithatbinhminh.com.vn/wp-content/uploads/2022/08/anh-dep-28.jpg"),
+            title: song.songName,
+            artist: song.songArtist,
+            artUri: Uri.file(
+              "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800",
+            ),
           ),
         ),
       );
       await _audioPlayer.play();
-      currentPlayingIndex = index;
-      notifyListeners();
-    }catch(e){
-      print("Loi khi phat nhac : $e");
+    } catch (e) {
+      throw Exception("Lỗi khi phát nhạc: $e");
     }
+    notifyListeners();
   }
 
-  Future<void> onPause() async{ await _audioPlayer.pause(); }
-  Future<void> onResume() async{ await _audioPlayer.play();}
-  Future<void> onStop() async{ await _audioPlayer.stop(); }
+  Future<void> onPause() async {
+    await _audioPlayer.pause();
+  }
+
+  Future<void> onResume() async {
+    await _audioPlayer.play();
+  }
+
+  Future<void> onStop() async {
+    currentSong = null;
+    await _audioPlayer.stop();
+  }
 
   void seek(Duration position) {
     _audioPlayer.seek(position);
   }
 
-  void skipToNext(){
-    if (songs.isEmpty || currentPlayingIndex == null) return;
-
-    previousIndex = currentPlayingIndex!;
+  Future<void> skipToNext() async {
+    if (songs.isEmpty || currentSong == null) return;
+    songHistory.add(currentSong!);
+    int currentPlayingIndex = songs.indexOf(currentSong!);
 
     if (isShuffle) {
-      currentPlayingIndex = ((currentPlayingIndex! + (1 + DateTime.now().millisecond) % songs.length) % songs.length);
+      final random = Random();
+      int nextIndex;
+      do {
+        nextIndex = random.nextInt(songs.length);
+      } while (currentPlayingIndex == nextIndex && songs.length > 1);
+      currentPlayingIndex = nextIndex;
     } else {
-      currentPlayingIndex = (currentPlayingIndex! + 1) % songs.length;
+      currentPlayingIndex = (currentPlayingIndex + 1) % songs.length;
     }
-    onPlay(currentPlayingIndex!);
+    await onPlay(songs[currentPlayingIndex]);
+    notifyListeners();
   }
 
-  void skipToPrevious(){
-    if (songs.isEmpty || currentPlayingIndex == null) return;
+  Future<void> skipToPrevious() async {
+    if (songs.isEmpty || currentSong == null) return;
 
-    if(previousIndex!=null){
-      currentPlayingIndex = previousIndex;
+    if (songHistory.isEmpty) {
+      return;
     }
-    onPlay(currentPlayingIndex!);
+    currentSong = songHistory.removeLast();
+    await onPlay(currentSong!);
+    notifyListeners();
   }
 
-  void toggleShuffle(){ isShuffle = !isShuffle; }
+  void toggleShuffle() {
+    isShuffle = !isShuffle;
+    notifyListeners();
+  }
 
-  void toggleRepeat(){ isRepeat= !isRepeat ;}
+  void toggleRepeat() {
+    isRepeat = !isRepeat;
+    notifyListeners();
+  }
 
   Future<void> togglePlayPause() async {
     if (_audioPlayer.playing) {
       await _audioPlayer.pause();
-      isPlaying = false;
     } else {
       await _audioPlayer.play();
-      isPlaying = true;
     }
-  }
-
-  void listenPlayerState(){
-    _audioPlayer.playerStateStream.listen((state){
-      if(state.processingState == ProcessingState.completed){
-        if(isRepeat && currentPlayingIndex != null){
-          onPlay(currentPlayingIndex!);
-        }else{
-          skipToNext();
-        }
-      }
-    });
   }
 
   @override
   void dispose() {
+    _audioPlayer.stop();
     _audioPlayer.dispose();
     super.dispose();
+  }
+
+  bool isSameList(List<Song> song1, List<Song> song2) {
+    if (song1.length != song2.length) return false;
+    final setA = song1.map((e) => e.id).toSet();
+    final setB = song2.map((e) => e.id).toSet();
+    return setA.containsAll(setB);
   }
 }

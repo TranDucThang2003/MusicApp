@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:music/controllers/audio_controller.dart';
 import 'package:music/controllers/song_controller.dart';
-import 'package:music/views/playlist_screen/playlist_screen.dart';
+import 'package:music/views/vertical/playlist_screen/playlist_screen.dart';
 import 'package:provider/provider.dart';
 
 Future<void> main() async {
+  debugPrintRebuildDirtyWidgets = true;
+  WidgetsFlutterBinding.ensureInitialized();
 
   await JustAudioBackground.init(
     androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
@@ -13,10 +15,14 @@ Future<void> main() async {
     androidNotificationOngoing: true,
   );
 
+  final songController = SongController();
+  await songController.requestPermissionAndLoadSongs();
+  //await songController.loadFavoriteSongs();
+
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SongController()..requestPermissionAndLoadSongs()),
+        ChangeNotifierProvider(create: (_) => songController),
         ChangeNotifierProxyProvider<SongController, AudioController>(
           create: (_) => AudioController(),
           update: (_, songController, audioController) {
@@ -29,8 +35,10 @@ Future<void> main() async {
     ),
   );
 }
+
 class MyMusicApp extends StatelessWidget {
   const MyMusicApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
