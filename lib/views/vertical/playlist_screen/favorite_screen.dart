@@ -16,25 +16,32 @@ class FavoriteScreen extends StatefulWidget {
 class FavoriteScreenState extends State<FavoriteScreen> {
   @override
   Widget build(BuildContext context) {
-    final audioController = context.watch<AudioController>();
-    final songController = context.watch<SongController>();
-    songController.loadFavoriteSongs();
-    List<Song> favoriteSongs = songController.favoriteSongs;
-
-    return ListView.builder(
-      itemCount: favoriteSongs.length,
-      physics: BouncingScrollPhysics(),
-      itemBuilder: (context, index) {
-        return SongItem(
-          song: favoriteSongs[index],
-          onClickItem: () {
-            audioController.setPlaylistAndPlay(
-              favoriteSongs,
-              favoriteSongs[index],
-            );
-          },
-        );
-      },
-    );
+    return Selector<SongController,List<Song>>(builder: (_,songs,__){
+      return ListView.builder(
+        itemCount: songs.length,
+        physics: BouncingScrollPhysics(),
+        itemBuilder: (context, index) {
+          return SongItem(
+            song: songs[index],
+            onClickItem: () {
+              context.read<AudioController>().setPlaylistAndPlay(
+                songs,
+                songs[index],
+              );
+            },
+          );
+        },
+      );
+    }, selector: (_,controller) => controller.favoriteSongs);
   }
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<SongController>().loadFavoriteSongs();
+    });
+  }
+
 }

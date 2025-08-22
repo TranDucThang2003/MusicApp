@@ -20,7 +20,6 @@ class SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final audioController = context.watch<AudioController>();
     final songController = context.read<SongController>();
 
     List<Song> filterSong() {
@@ -32,9 +31,7 @@ class SearchScreenState extends State<SearchScreen> {
             song.songName.toLowerCase().contains(queryString.toLowerCase());
       }).toList();
     }
-
     List<Song> filteredSongs = filterSong();
-
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
@@ -116,7 +113,7 @@ class SearchScreenState extends State<SearchScreen> {
                 return SongItem(
                   song: filteredSongs[index],
                   onClickItem: () {
-                    audioController.setPlaylistAndPlay(
+                    context.read<AudioController>().setPlaylistAndPlay(
                       songController.songs,
                       song,
                     );

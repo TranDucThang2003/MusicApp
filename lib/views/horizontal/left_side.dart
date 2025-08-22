@@ -5,8 +5,8 @@ import 'package:provider/provider.dart';
 
 import '../../../components/song_item.dart';
 
-class MusicListScreen extends StatelessWidget {
-  const MusicListScreen({super.key});
+class LeftSide extends StatelessWidget {
+  const LeftSide({super.key});
 
   @override
   Widget build(BuildContext context) {

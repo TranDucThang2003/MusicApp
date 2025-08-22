@@ -80,19 +80,18 @@ class SongController extends ChangeNotifier {
       );
     }
   }
-
+  Future<void> syncSongs(List<Song> deviceSongs) async {
+    await DatabaseHelper.instance.insertSongs(deviceSongs);
+  }
   Future<void> loadFavoriteSongs() async {
     _favoriteSongs = await DatabaseHelper.instance.getFavoriteSongs();
     notifyListeners();
   }
 
-  Future<void> syncSongs(List<Song> deviceSongs) async {
-    await DatabaseHelper.instance.insertSongs(deviceSongs);
-  }
-
   Future<void> handleFavoriteSong(Song song) async {
     song.isFavorite = !song.isFavorite;
-    notifyListeners();
     await DatabaseHelper.instance.favoriteSong(song.id, song.isFavorite);
+    loadFavoriteSongs();
+    loadSongsOffline();
   }
 }
