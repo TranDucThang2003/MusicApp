@@ -5,6 +5,8 @@ import 'package:music/controllers/audio_controller.dart';
 import 'package:music/controllers/song_controller.dart';
 import 'package:provider/provider.dart';
 
+import '../../../models/song.dart';
+
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({super.key});
 
@@ -40,39 +42,37 @@ class _PlayerScreenState extends State<PlayerScreen>
 
   @override
   Widget build(BuildContext context) {
-    final audioController = context.watch<AudioController>();
-    final songController = context.read<SongController>();
-
-    final song = audioController.currentSong;
+    final audioController = context.read<AudioController>();
+    final song = context.select<AudioController,Song?>((controller)=>controller.currentSong);
     if (song == null) {
       return const Scaffold(
         body: Center(child: Text("Không có bài hát nào đang phát")),
       );
     }
 
-    return SingleChildScrollView(
-      child: Scaffold(
-        backgroundColor: Colors.purple,
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: const Text(
-            "CHILLTIME",
-            style: TextStyle(color: Colors.white, letterSpacing: 20),
-          ),
-          centerTitle: true,
-          elevation: 0,
+    return Scaffold(
+      backgroundColor: Colors.purple,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        title: const Text(
+          "CHILLTIME",
+          style: TextStyle(color: Colors.white, letterSpacing: 20),
         ),
-        body: Container(
-          margin: const EdgeInsets.only(top: kToolbarHeight + 50),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(50),
-              topRight: Radius.circular(50),
-            ),
+        centerTitle: true,
+        elevation: 0,
+      ),
+      body: Container(
+        margin: const EdgeInsets.only(top: kToolbarHeight + 50),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(50),
+            topRight: Radius.circular(50),
           ),
-          child: Center(
+        ),
+        child: Center(
+          child: SingleChildScrollView(
             child: Column(
               children: [
                 // Nút favorite
@@ -83,7 +83,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                       margin: const EdgeInsets.only(top: 20, right: 20),
                       child: IconButton(
                         onPressed: () {
-                          songController.handleFavoriteSong(song);
+                          context.read<SongController>().handleFavoriteSong(
+                            song,
+                          );
                         },
                         icon: Icon(
                           song.isFavorite
@@ -180,17 +182,22 @@ class _PlayerScreenState extends State<PlayerScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    IconButton(
-                      onPressed: () {
-                        audioController.toggleRepeat();
+                    Selector<AudioController, bool>(
+                      builder: (_, isRepeat, __) {
+                        return IconButton(
+                          onPressed: () {
+                            audioController.toggleRepeat();
+                          },
+                          icon: Icon(
+                            Icons.repeat,
+                            size: 50,
+                            color: isRepeat
+                                ? Colors.amber
+                                : Colors.black,
+                          ),
+                        );
                       },
-                      icon: Icon(
-                        Icons.repeat,
-                        size: 50,
-                        color: audioController.isRepeat
-                            ? Colors.amber
-                            : Colors.black,
-                      ),
+                      selector: (_, controller) => controller.isRepeat,
                     ),
                     IconButton(
                       onPressed: () {
@@ -226,17 +233,22 @@ class _PlayerScreenState extends State<PlayerScreen>
                       },
                       icon: const Icon(Icons.skip_next, size: 50),
                     ),
-                    IconButton(
-                      onPressed: () {
-                        audioController.toggleShuffle();
+                    Selector<AudioController, bool>(
+                      builder: (_, isShuffle, __) {
+                        return IconButton(
+                          onPressed: () {
+                            audioController.toggleShuffle();
+                          },
+                          icon: Icon(
+                            Icons.shuffle,
+                            size: 50,
+                            color: isShuffle
+                                ? Colors.amber
+                                : Colors.black,
+                          ),
+                        );
                       },
-                      icon: Icon(
-                        Icons.shuffle,
-                        size: 50,
-                        color: audioController.isShuffle
-                            ? Colors.amber
-                            : Colors.black,
-                      ),
+                      selector: (_, controller) => controller.isShuffle,
                     ),
                   ],
                 ),

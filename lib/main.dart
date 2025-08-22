@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:music/controllers/audio_controller.dart';
 import 'package:music/controllers/song_controller.dart';
-import 'package:music/views/vertical/playlist_screen/playlist_screen.dart';
+import 'package:music/views/responsive_screen.dart';
 import 'package:provider/provider.dart';
 
 Future<void> main() async {
@@ -17,7 +17,6 @@ Future<void> main() async {
 
   final songController = SongController();
   await songController.requestPermissionAndLoadSongs();
-  //await songController.loadFavoriteSongs();
 
   runApp(
     MultiProvider(
@@ -45,7 +44,7 @@ class MyMusicApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: PlayListScreen(),
+      home: ResponsiveScreen(),
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:music/controllers/audio_controller.dart';
 import 'package:music/controllers/song_controller.dart';
 import 'package:provider/provider.dart';
 import '../models/song.dart';
+import '../views/vertical/player_screen/player_screen.dart';
 
 class SongItem extends StatelessWidget {
   final Song song;
@@ -12,29 +13,46 @@ class SongItem extends StatelessWidget {
 
   const SongItem({super.key, required this.song, required this.onClickItem});
 
+  void onClickToMovePlayScreen(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PlayerScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final audioController = context.watch<AudioController>();
-    final songController = context.watch<SongController>();
+    final currentSong = context.select<AudioController, Song?>(
+      (controller) => controller.currentSong,
+    );
     return GestureDetector(
-      onTap: onClickItem,
+      onTap: () {
+        if(MediaQuery.of(context).orientation == Orientation.landscape){
+          onClickItem();
+        }else{
+          if (currentSong == song) {
+            onClickToMovePlayScreen(context);
+          } else {
+            onClickItem();
+          }
+        }
+      },
       child: Container(
         margin: EdgeInsets.all(5),
         padding: EdgeInsets.all(5),
         decoration: BoxDecoration(
-          color: audioController.currentSong == song ? Colors.orange[300] : Colors.white,
+          color: currentSong == song ? Colors.orange[300] : Colors.white,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color : Colors.white10,width: 1),
+          border: Border.all(color: Colors.white10, width: 1),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            SizedBox(width: MediaQuery.of(context).size.width * 0.05),
             ClipRRect(
               borderRadius: BorderRadius.circular(15),
               child: song.backgroundURL != ""
                   ? Image.file(
-                      File(song.backgroundURL!),
+                      File(song.backgroundURL),
                       width: 50,
                       height: 50,
                       fit: BoxFit.cover,
@@ -76,11 +94,24 @@ class SongItem extends StatelessWidget {
               ),
             ),
             IconButton(
-              onPressed: () => audioController.currentSong == song ? audioController.onStop() : songController.handleFavoriteSong(song),
-              icon: Icon(
-                audioController.currentSong == song ? Icons.pause : song.isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: audioController.currentSong == song ? Colors.black : Color(0xFFFF5252),
+              onPressed: () => currentSong == song
+                  ? context.read<AudioController>().onPause()
+                  : context.read<SongController>().handleFavoriteSong(song),
+              icon: Consumer2<SongController, AudioController>(
+                builder: (_, songController, audioController, __) {
+                  return Icon(
+                    currentSong == song
+                        ? (audioController.isPlaying ? Icons.pause : Icons.play_arrow)
+                        : song.isFavorite
+                        ? Icons.favorite
+                        : Icons.favorite_border,
+                    color: currentSong == song
+                        ? Colors.black
+                        : const Color(0xFFFF5252),
+                  );
+                },
               ),
+
             ),
           ],
         ),

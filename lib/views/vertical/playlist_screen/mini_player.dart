@@ -18,8 +18,7 @@ class MiniPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final audioController = context.watch<AudioController>();
-    final currentSong = audioController.currentSong;
+    final currentSong = context.select<AudioController,Song?>((controller)=>controller.currentSong);
 
     if (currentSong == null) return SizedBox.shrink();
     return Align(
