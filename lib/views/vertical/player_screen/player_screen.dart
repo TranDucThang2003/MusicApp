@@ -148,13 +148,12 @@ class _PlayerScreenState extends State<PlayerScreen>
 
                 // Thanh thời gian
                 StreamBuilder<Duration>(
-                  stream: context
-                      .read<AudioController>()
+                  stream: audioController
                       .audioPlayer
                       .positionStream,
                   builder: (context, snap) {
                     final position = snap.data ?? Duration.zero;
-                    final total = context.read<AudioController>().totalDuration;
+                    final total = audioController.totalDuration;
                     return Column(
                       children: [
                         Padding(
@@ -222,20 +221,21 @@ class _PlayerScreenState extends State<PlayerScreen>
                         color: Colors.purple,
                         borderRadius: BorderRadius.circular(75),
                       ),
-                      child: IconButton(
-                        onPressed: () {
-                          audioController.togglePlayPause();
-                          audioController.isPlaying
-                              ? _rotationController.stop()
-                              : _rotationController.repeat();
-                        },
-                        icon: Icon(
-                          audioController.isPlaying
-                              ? Icons.pause
-                              : Icons.play_arrow,
-                          size: 50,
-                        ),
-                      ),
+                      child:
+                      Selector<AudioController,bool>(builder: (_,isPlaying,__){
+                        return IconButton(
+                          onPressed: () {
+                            audioController.togglePlayPause();
+                          },
+                          icon: Icon(
+                            isPlaying
+                                ? Icons.pause
+                                : Icons.play_arrow,
+                            size: 50,
+                          ),
+                        );
+                      }, selector: (_,controller)=>controller.isPlaying)
+                      ,
                     ),
                     IconButton(
                       onPressed: () {
