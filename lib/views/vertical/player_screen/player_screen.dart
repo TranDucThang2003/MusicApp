@@ -23,7 +23,7 @@ class _PlayerScreenState extends State<PlayerScreen>
     super.initState();
     _rotationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 90),
+      duration: const Duration(seconds: 60),
     )..repeat();
   }
 
@@ -43,7 +43,9 @@ class _PlayerScreenState extends State<PlayerScreen>
   @override
   Widget build(BuildContext context) {
     final audioController = context.read<AudioController>();
-    final song = context.select<AudioController,Song?>((controller)=>controller.currentSong);
+    final song = context.select<AudioController, Song?>(
+      (controller) => controller.currentSong,
+    );
     if (song == null) {
       return const Scaffold(
         body: Center(child: Text("Không có bài hát nào đang phát")),
@@ -100,25 +102,35 @@ class _PlayerScreenState extends State<PlayerScreen>
                 const SizedBox(height: 50),
 
                 // Ảnh xoay
-                Container(
-                  width: 250,
-                  height: 250,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.amber, width: 5),
-                    borderRadius: BorderRadius.circular(250),
-                  ),
-                  child: RotationTransition(
-                    turns: _rotationController,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(250),
-                      child: Hero(
-                        tag: 'player',
-                        child: song.backgroundURL != ""
-                            ? Image.file(File(song.backgroundURL))
-                            : Image.asset("assets/images/bg.png"),
+                Selector<AudioController, bool>(
+                  builder: (_, isPlaying, __) {
+                    if (isPlaying) {
+                      _rotationController.repeat();
+                    } else {
+                      _rotationController.stop(canceled: false);
+                    }
+                    return Container(
+                      width: 250,
+                      height: 250,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.amber, width: 5),
+                        borderRadius: BorderRadius.circular(250),
                       ),
-                    ),
-                  ),
+                      child: RotationTransition(
+                        turns: _rotationController,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(250),
+                          child: Hero(
+                            tag: 'player',
+                            child: song.backgroundURL != ""
+                                ? Image.file(File(song.backgroundURL))
+                                : Image.asset("assets/images/bg.png"),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  selector: (_, controller) => controller.isPlaying,
                 ),
                 const SizedBox(height: 50),
 
@@ -191,9 +203,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                           icon: Icon(
                             Icons.repeat,
                             size: 50,
-                            color: isRepeat
-                                ? Colors.amber
-                                : Colors.black,
+                            color: isRepeat ? Colors.amber : Colors.black,
                           ),
                         );
                       },
@@ -242,9 +252,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                           icon: Icon(
                             Icons.shuffle,
                             size: 50,
-                            color: isShuffle
-                                ? Colors.amber
-                                : Colors.black,
+                            color: isShuffle ? Colors.amber : Colors.black,
                           ),
                         );
                       },
