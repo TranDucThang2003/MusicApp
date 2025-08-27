@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:music/utils/utils.dart';
 import '../models/song.dart';
 
 class AudioController extends ChangeNotifier {
@@ -16,7 +17,7 @@ class AudioController extends ChangeNotifier {
   Duration totalDuration = Duration.zero;
 
   bool isShuffle = false;
-  bool isRepeat = false;
+  Repeat isRepeat = Repeat.noRepeat;
   bool isPlaying = false;
 
   List<Song> songs = [];
@@ -42,10 +43,21 @@ class AudioController extends ChangeNotifier {
 
     _audioPlayer.playerStateStream.listen((state) {
       if (state.processingState == ProcessingState.completed) {
-        if (isRepeat && currentSong != null) {
-          onPlay(currentSong!);
-        } else {
-          skipToNext();
+        switch (isRepeat){
+          case Repeat.noRepeat :
+            onPause();
+            break;
+          case Repeat.repeatOne :
+            if(currentSong!=null){
+              onPlay(currentSong!);
+              break;
+            }else{
+              onStop();
+              break;
+            }
+          case Repeat.repeatAll :
+            skipToNext();
+            break;
         }
       }
     });
@@ -56,11 +68,11 @@ class AudioController extends ChangeNotifier {
   }
 
   Future<void> setPlaylistAndPlay(List<Song> newSongs, Song startSong) async {
-    if (!isSameList(newSongs, songs)) {
-      songs = newSongs;
-    }
     if (currentSong != startSong) {
       await onPlay(startSong);
+    }
+    if (!isSameList(newSongs, songs)) {
+      songs = newSongs;
     }
   }
 
@@ -107,7 +119,9 @@ class AudioController extends ChangeNotifier {
   }
 
   Future<void> skipToNext() async {
+
     if (songs.isEmpty || currentSong == null) return;
+
     songHistory.add(currentSong!);
     int currentPlayingIndex = songs.indexOf(currentSong!);
 
@@ -142,7 +156,17 @@ class AudioController extends ChangeNotifier {
   }
 
   void toggleRepeat() {
-    isRepeat = !isRepeat;
+    switch (isRepeat){
+      case Repeat.noRepeat :
+        isRepeat = Repeat.repeatAll;
+        break;
+      case Repeat.repeatOne :
+        isRepeat = Repeat.noRepeat;
+        break;
+      case Repeat.repeatAll :
+        isRepeat = Repeat.repeatOne;
+        break;
+    }
     notifyListeners();
   }
 
@@ -150,7 +174,11 @@ class AudioController extends ChangeNotifier {
     if (_audioPlayer.playing) {
       await _audioPlayer.pause();
     } else {
-      await _audioPlayer.play();
+      if(_audioPlayer.processingState == ProcessingState.completed && currentSong!=null){
+        onPlay(currentSong!);
+      }else{
+        await _audioPlayer.play();
+      }
     }
   }
 

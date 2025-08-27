@@ -1,0 +1,1 @@
+enum Repeat {noRepeat,repeatOne,repeatAll}

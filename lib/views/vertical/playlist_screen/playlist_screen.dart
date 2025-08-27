@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:music/views/vertical/playlist_screen/search_screen.dart';
+import 'package:provider/provider.dart';
+import '../../../controllers/audio_controller.dart';
 import 'favorite_screen.dart';
 import 'mini_player.dart';
 import 'music_list_screen.dart';
@@ -34,11 +36,13 @@ class PlayListScreenState extends State<PlayListScreen> {
         title: Text("PLAYLIST", style: TextStyle(letterSpacing: 20)),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          Expanded(child: pages[_currentIndex]),
-          MiniPlayer(),
-        ],
+      body: Expanded(
+        child: Column(
+          children: [
+            Expanded(child: pages[_currentIndex]),
+            MiniPlayer(),
+          ],
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
