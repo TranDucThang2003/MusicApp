@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:music/controllers/audio_controller.dart';
 import 'package:music/controllers/song_controller.dart';
+import 'package:music/utils/utils.dart';
 import 'package:provider/provider.dart';
 
 import '../../../models/song.dart';
@@ -55,24 +56,32 @@ class _PlayerScreenState extends State<PlayerScreen>
     return Scaffold(
       backgroundColor: Colors.purple,
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: const Text(
-          "CHILLTIME",
-          style: TextStyle(color: Colors.white, letterSpacing: 20),
-        ),
-        centerTitle: true,
-        elevation: 0,
-      ),
+      appBar: MediaQuery.of(context).orientation == Orientation.landscape
+          ? null
+          : AppBar(
+              backgroundColor: Colors.transparent,
+              title: const Text(
+                "CHILLTIME",
+                style: TextStyle(color: Colors.white, letterSpacing: 20),
+              ),
+              centerTitle: true,
+              elevation: 0,
+            ),
       body: Container(
-        margin: const EdgeInsets.only(top: kToolbarHeight + 50),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(50),
-            topRight: Radius.circular(50),
-          ),
-        ),
+        margin: MediaQuery.of(context).orientation == Orientation.landscape
+            ? null
+            : EdgeInsets.only(top: kToolbarHeight + 50),
+        decoration: MediaQuery.of(context).orientation == Orientation.landscape
+            ? BoxDecoration(
+                color: Colors.white
+              )
+            : BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(50),
+                  topRight: Radius.circular(50),
+                ),
+              ),
         child: Center(
           child: SingleChildScrollView(
             child: Column(
@@ -148,9 +157,7 @@ class _PlayerScreenState extends State<PlayerScreen>
 
                 // Thanh thời gian
                 StreamBuilder<Duration>(
-                  stream: audioController
-                      .audioPlayer
-                      .positionStream,
+                  stream: audioController.audioPlayer.positionStream,
                   builder: (context, snap) {
                     final position = snap.data ?? Duration.zero;
                     final total = audioController.totalDuration;
@@ -193,16 +200,20 @@ class _PlayerScreenState extends State<PlayerScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Selector<AudioController, bool>(
+                    Selector<AudioController, Repeat>(
                       builder: (_, isRepeat, __) {
                         return IconButton(
                           onPressed: () {
                             audioController.toggleRepeat();
                           },
                           icon: Icon(
-                            Icons.repeat,
+                            isRepeat == Repeat.repeatOne
+                                ? Icons.repeat_one
+                                : Icons.repeat,
                             size: 50,
-                            color: isRepeat ? Colors.amber : Colors.black,
+                            color: isRepeat == Repeat.noRepeat
+                                ? Colors.black
+                                : Colors.amber,
                           ),
                         );
                       },
@@ -221,21 +232,20 @@ class _PlayerScreenState extends State<PlayerScreen>
                         color: Colors.purple,
                         borderRadius: BorderRadius.circular(75),
                       ),
-                      child:
-                      Selector<AudioController,bool>(builder: (_,isPlaying,__){
-                        return IconButton(
-                          onPressed: () {
-                            audioController.togglePlayPause();
-                          },
-                          icon: Icon(
-                            isPlaying
-                                ? Icons.pause
-                                : Icons.play_arrow,
-                            size: 50,
-                          ),
-                        );
-                      }, selector: (_,controller)=>controller.isPlaying)
-                      ,
+                      child: Selector<AudioController, bool>(
+                        builder: (_, isPlaying, __) {
+                          return IconButton(
+                            onPressed: () {
+                              audioController.togglePlayPause();
+                            },
+                            icon: Icon(
+                              isPlaying ? Icons.pause : Icons.play_arrow,
+                              size: 50,
+                            ),
+                          );
+                        },
+                        selector: (_, controller) => controller.isPlaying,
+                      ),
                     ),
                     IconButton(
                       onPressed: () {

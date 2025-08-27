@@ -10,17 +10,14 @@ class MiniPlayer extends StatelessWidget {
   const MiniPlayer({super.key});
 
   void onClickToMovePlayScreen(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const PlayerScreen()),
-    );
+    Navigator.of(context).pushNamed('/player');
   }
 
   @override
   Widget build(BuildContext context) {
     final currentSong = context.select<AudioController,Song?>((controller)=>controller.currentSong);
 
-    if (currentSong == null) return SizedBox.shrink();
+    if (currentSong == null || MediaQuery.of(context).orientation == Orientation.landscape) return SizedBox.shrink();
     return Align(
       alignment: Alignment.bottomCenter,
       child: GestureDetector(

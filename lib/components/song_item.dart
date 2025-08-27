@@ -14,10 +14,7 @@ class SongItem extends StatelessWidget {
   const SongItem({super.key, required this.song, required this.onClickItem});
 
   void onClickToMovePlayScreen(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const PlayerScreen()),
-    );
+    Navigator.of(context).pushNamed('/player');
   }
 
   @override
@@ -41,7 +38,7 @@ class SongItem extends StatelessWidget {
         margin: EdgeInsets.all(5),
         padding: EdgeInsets.all(5),
         decoration: BoxDecoration(
-          color: currentSong == song ? Colors.orange[300] : Colors.white,
+          color: currentSong?.id == song.id ? Colors.orange[300] : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Colors.white10, width: 1),
         ),
@@ -94,18 +91,18 @@ class SongItem extends StatelessWidget {
               ),
             ),
             IconButton(
-              onPressed: () => currentSong == song
-                  ? context.read<AudioController>().togglePlayPause()
+              onPressed: () => currentSong?.id == song.id
+                  ? context.read<AudioController>().onStop()
                   : context.read<SongController>().handleFavoriteSong(song),
               icon: Consumer2<SongController, AudioController>(
                 builder: (_, songController, audioController, __) {
                   return Icon(
-                    currentSong == song
+                    currentSong?.id == song.id
                         ? (audioController.isPlaying ? Icons.pause : Icons.play_arrow)
                         : song.isFavorite
                         ? Icons.favorite
                         : Icons.favorite_border,
-                    color: currentSong == song
+                    color: currentSong?.id == song.id
                         ? Colors.black
                         : const Color(0xFFFF5252),
                   );

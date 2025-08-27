@@ -6,7 +6,6 @@ import 'package:music/views/responsive_screen.dart';
 import 'package:provider/provider.dart';
 
 Future<void> main() async {
-  debugPrintRebuildDirtyWidgets = true;
   WidgetsFlutterBinding.ensureInitialized();
 
   await JustAudioBackground.init(

@@ -31,20 +31,26 @@ class SearchScreenState extends State<SearchScreen> {
             song.songName.toLowerCase().contains(queryString.toLowerCase());
       }).toList();
     }
+
     List<Song> filteredSongs = filterSong();
 
     return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Container(
           padding: EdgeInsets.symmetric(
-            horizontal: MediaQuery.of(context).size.width * 0.05,
+            horizontal: MediaQuery.of(context).orientation == Orientation.landscape
+                ? MediaQuery.of(context).size.width * 0.0035
+                : MediaQuery.of(context).size.width * 0.05,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               SizedBox(
-                width: MediaQuery.of(context).size.width * 0.7,
+                width:
+                    MediaQuery.of(context).orientation == Orientation.landscape
+                    ? MediaQuery.of(context).size.width * 0.28
+                    : MediaQuery.of(context).size.width * 0.7,
                 height: 50,
                 child: TextField(
                   decoration: InputDecoration(
@@ -104,7 +110,7 @@ class SearchScreenState extends State<SearchScreen> {
         SizedBox(height: 10),
         Expanded(
           child: Container(
-            margin: EdgeInsets.all(10),
+            margin: EdgeInsets.all(5),
             child: ListView.builder(
               itemCount: filteredSongs.length,
               physics: BouncingScrollPhysics(),
