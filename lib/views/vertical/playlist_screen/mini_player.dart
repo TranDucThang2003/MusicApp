@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:music/controllers/audio_controller.dart';
 import 'package:provider/provider.dart';
 import '../../../models/song.dart';
-import '../player_screen/player_screen.dart';
 
 class MiniPlayer extends StatelessWidget {
   const MiniPlayer({super.key});
@@ -75,7 +74,7 @@ class MiniPlayer extends StatelessWidget {
                       color: Colors.white,
                     ),
                     onPressed: () {
-                      context.read<AudioController>().togglePlayPause();
+                      context.read<AudioController>().onStop();
                     },
                   );
                 },
