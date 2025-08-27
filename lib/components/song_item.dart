@@ -5,7 +5,6 @@ import 'package:music/controllers/audio_controller.dart';
 import 'package:music/controllers/song_controller.dart';
 import 'package:provider/provider.dart';
 import '../models/song.dart';
-import '../views/vertical/player_screen/player_screen.dart';
 
 class SongItem extends StatelessWidget {
   final Song song;
