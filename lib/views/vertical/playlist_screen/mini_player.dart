@@ -74,7 +74,7 @@ class MiniPlayer extends StatelessWidget {
                       color: Colors.white,
                     ),
                     onPressed: () {
-                      context.read<AudioController>().onStop();
+                      context.read<AudioController>().togglePlayPause();
                     },
                   );
                 },

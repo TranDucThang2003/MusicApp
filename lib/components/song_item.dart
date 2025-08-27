@@ -91,7 +91,7 @@ class SongItem extends StatelessWidget {
             ),
             IconButton(
               onPressed: () => currentSong?.id == song.id
-                  ? context.read<AudioController>().onStop()
+                  ? context.read<AudioController>().togglePlayPause()
                   : context.read<SongController>().handleFavoriteSong(song),
               icon: Consumer2<SongController, AudioController>(
                 builder: (_, songController, audioController, __) {
