@@ -41,7 +41,10 @@ class AudioController extends ChangeNotifier {
       //notifyListeners();
     });
 
+
+
     _audioPlayer.playerStateStream.listen((state) {
+      print("State: ${state.processingState}, playing: ${state.playing}");
       if (state.processingState == ProcessingState.completed) {
         switch (isRepeat){
           case Repeat.noRepeat :
@@ -88,8 +91,8 @@ class AudioController extends ChangeNotifier {
             album: "Album",
             title: song.songName,
             artist: song.songArtist,
-            artUri: Uri.file(
-              "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800",
+            artUri: Uri.parse(
+              "assets://assets/images/bg1.png",
             ),
           ),
         ),
