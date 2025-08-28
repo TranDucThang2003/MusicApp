@@ -44,7 +44,6 @@ class AudioController extends ChangeNotifier {
 
 
     _audioPlayer.playerStateStream.listen((state) {
-      print("State: ${state.processingState}, playing: ${state.playing}");
       if (state.processingState == ProcessingState.completed) {
         switch (isRepeat){
           case Repeat.noRepeat :
@@ -81,6 +80,7 @@ class AudioController extends ChangeNotifier {
 
   Future<void> onPlay(Song song) async {
     currentSong = song;
+    final artUri = await getAssetAsFileUri('assets/images/bg1.jpeg');
     if (songs.isEmpty) return;
     try {
       await _audioPlayer.setAudioSource(
@@ -91,9 +91,7 @@ class AudioController extends ChangeNotifier {
             album: "Album",
             title: song.songName,
             artist: song.songArtist,
-            artUri: Uri.parse(
-              "assets://assets/images/bg1.png",
-            ),
+            artUri: artUri,
           ),
         ),
       );
@@ -146,7 +144,7 @@ class AudioController extends ChangeNotifier {
     if (songs.isEmpty || currentSong == null) return;
 
     if (songHistory.isEmpty) {
-      return;
+      await onPlay(currentSong!);
     }
     currentSong = songHistory.removeLast();
     await onPlay(currentSong!);

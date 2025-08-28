@@ -72,9 +72,7 @@ class _PlayerScreenState extends State<PlayerScreen>
             ? null
             : EdgeInsets.only(top: kToolbarHeight + 50),
         decoration: MediaQuery.of(context).orientation == Orientation.landscape
-            ? BoxDecoration(
-                color: Colors.white
-              )
+            ? BoxDecoration(color: Colors.white)
             : BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
@@ -98,11 +96,15 @@ class _PlayerScreenState extends State<PlayerScreen>
                             song,
                           );
                         },
-                        icon: Icon(
-                          song.isFavorite
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: Colors.pinkAccent,
+                        icon: Consumer<SongController>(
+                          builder: (_, controller, __) {
+                            return Icon(
+                              song.isFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: Colors.pinkAccent,
+                            );
+                          },
                         ),
                       ),
                     ),
